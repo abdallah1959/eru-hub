@@ -25,7 +25,12 @@ h1{font-size:clamp(1.8rem,5vw,2.8rem);line-height:1.3;margin:18px 0 6px;font-wei
 .sub{color:var(--soft);font-size:1.05rem}
 .date{display:inline-block;margin-top:14px;padding:4px 16px;border-radius:99px;background:var(--g);border:1px solid var(--gb);backdrop-filter:blur(10px);font-size:.88rem;color:var(--soft)}
 h2{font-size:1.25rem;font-weight:800;margin:38px 0 16px;padding-inline-start:12px;border-inline-start:4px solid var(--red)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr));gap:18px;align-items:stretch}
+.tile{min-width:0;min-height:100%}
+.name,.desc{overflow-wrap:anywhere}
+.acts .btn{min-width:0;min-height:44px;padding-inline:8px}
+.btn:focus-visible,.lang:focus-visible,.x:focus-visible{outline:3px solid #fff;outline-offset:3px}
+img{max-width:100%}
 .tile{display:flex;flex-direction:column;gap:10px;padding:14px 14px 18px;border-radius:22px;background:var(--g);border:1.5px solid var(--gb);backdrop-filter:blur(16px);transition:transform .2s,border-color .2s,background .2s}
 .tile:hover{transform:translateY(-4px);background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.45)}
 .panel{height:144px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;padding:10px;overflow:hidden}
@@ -46,9 +51,10 @@ html[dir=rtl] .host{text-align:right}
 .ghost{background:rgba(255,255,255,.14);border:1px solid var(--gb)}
 .credit{margin-top:8px;font-size:.92rem;color:var(--soft)}.credit strong{color:#fff;font-weight:800;letter-spacing:.2px;direction:ltr;unicode-bidi:isolate}
 footer{text-align:center;margin-top:46px;padding-top:18px;border-top:1px solid var(--gb);color:#a9b8e3;font-size:.85rem}
-dialog{margin:auto;border:0;border-radius:24px;padding:0;background:transparent;color:#fff;max-width:92vw;overflow:visible}
+dialog{margin:auto;border:0;border-radius:24px;padding:0;background:transparent;color:#fff;width:min(420px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto}
 dialog::backdrop{background:rgba(5,9,26,.72);backdrop-filter:blur(6px)}
-.modal{width:min(380px,92vw);padding:24px;border-radius:24px;background:linear-gradient(160deg,#16275a,#0c1637);border:1.5px solid var(--gb);box-shadow:0 30px 80px rgba(0,0,0,.6);text-align:center;position:relative}
+.modal{width:100%;max-height:calc(100dvh - 24px);overflow:auto}
+.modal{width:100%;max-height:calc(100dvh - 24px);overflow:auto;padding:24px;border-radius:24px;background:linear-gradient(160deg,#16275a,#0c1637);border:1.5px solid var(--gb);box-shadow:0 30px 80px rgba(0,0,0,.6);text-align:center;position:relative}
 .modal h3{font-size:1.15rem;font-weight:800;margin:0 28px 4px}
 .modal p{color:var(--soft);font-size:.88rem;margin-bottom:14px}
 .qrbox{background:#fff;border-radius:18px;padding:12px;display:inline-block}
@@ -61,7 +67,18 @@ dialog::backdrop{background:rgba(5,9,26,.72);backdrop-filter:blur(6px)}
 .toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,24px);opacity:0;visibility:hidden;background:#fff;color:#0a1330;font-weight:700;padding:11px 22px;border-radius:99px;box-shadow:0 12px 32px rgba(0,0,0,.45);transition:.3s;z-index:99;max-width:92vw;text-align:center}
 .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
 a:focus-visible,button:focus-visible{outline:3px solid #fff;outline-offset:2px}
-@media (max-width:560px){.wrap{padding:16px 14px 36px}.logo{width:100px;height:100px}.grid{grid-template-columns:1fr}}
+@media (max-width:560px){
+ .wrap{padding:16px 12px 32px}
+ .logo{width:100px;height:100px}
+ .grid{grid-template-columns:minmax(0,1fr);gap:14px}
+ .tile{padding:12px 12px 16px;border-radius:18px}
+ .panel{height:132px}
+ .panel img{max-height:112px}
+ .modal{padding:20px 16px}
+ .qrbox{max-width:100%;padding:8px}
+ .dl{gap:7px}
+}
+@media (max-width:350px){.acts{gap:6px}.btn{font-size:.85rem}.host{font-size:.7rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -109,7 +126,7 @@ const I=[
  ar:{n:"الجروب الأساسي للدفعة",d:"نقاش وتبادل مذكرات بين الطلاب",b:"غير رسمي"},en:{n:"Main Cohort Group",d:"Student discussion and study-material sharing",b:"Unofficial"}}];
 const QU={sis:"https://sis.eru.edu.eg/UI/StudentView/Home.aspx",lms:"https://lms.eru.edu.eg/?redirect=0",behiry:"https://drbehiry-lms.tech/student",off:"https://chat.whatsapp.com/J0QIkrokUEMDME0saHgRDE",main:"https://chat.whatsapp.com/DO176LV6uSODTvKO2ohjcM",drive:"https://drive.google.com/drive/folders/1vnaQC-LTiMU5Tz-kU_lEmpxRp3FliXhs?usp=sharing"};
 let lang="ar",cur=null;
-try{lang=localStorage.getItem("eru_lang")||"ar"}catch(_){}
+try{const savedLang=localStorage.getItem("eru_lang");lang=savedLang==="en"?"en":"ar"}catch(_){}
 const $=id=>document.getElementById(id);
 function tile(it){const t=it[lang],s=S[lang];
  return `<article class="tile ${it.g==="chat"?"wa":""}"><div class="panel ${it.cls||""}"><img src="${IMG[it.id]}" alt="${t.n}"></div>
@@ -120,7 +137,7 @@ function renderDate(){const s=S[lang];$("date").textContent=new Date().toLocaleD
 function render(){
  const s=S[lang];document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";
  $("t_title").textContent=s.title;$("t_sub").textContent=s.sub;$("lang").textContent="🌐 "+s.lang;$("foot").innerHTML=`<div>${s.foot}</div><div class="credit">${s.by} <strong>Abdallah Abd Elsalam</strong></div>`;
- $("mdesc")&&0;$("md").textContent=s.mdesc;$("dpng").textContent=s.png;$("dsvg").textContent=s.svg;renderDate();
+ $("md").textContent=s.mdesc;$("dpng").textContent=s.png;$("dsvg").textContent=s.svg;renderDate();
  const sec=(h,l)=>`<h2>${h}</h2><div class="grid">${l.map(tile).join("")}</div>`;
  $("out").innerHTML=sec(s.hStudy,I.filter(i=>i.g==="study"&&i.id!=="drive"))+sec(s.hMore,I.filter(i=>i.id==="drive"||i.g==="chat"));
  document.querySelectorAll("[data-copy]").forEach(b=>b.onclick=async()=>{const u=I.find(i=>i.id===b.dataset.copy).url;say(await copyText(u)?S[lang].copied:S[lang].copyFail)});
@@ -133,11 +150,15 @@ function svgOf(rows){const n=rows.length,q=4,N=n+q*2;let d="";rows.forEach((r,y)
  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${N} ${N}" width="${N*12}" height="${N*12}" shape-rendering="crispEdges"><rect width="${N}" height="${N}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`}
 function showQR(id){cur=id;const it=I.find(i=>i.id===id);$("mt").textContent=it[lang].n;$("mh").textContent=QU[id];draw($("cv"),QR[id],12);$("dlg").showModal()}
 async function copyText(u){try{await navigator.clipboard.writeText(u);return true}catch(_){}try{const t=document.createElement("textarea");t.value=u;t.style.cssText="position:fixed;opacity:0";document.body.appendChild(t);t.select();const ok=document.execCommand("copy");t.remove();return ok}catch(_){return false}}
-async function save(blob,name){let d=null;try{d=window.claude?await window.claude.use("downloads"):null}catch(_){}
- if(d){try{await d.save({filename:name,data:blob});say(S[lang].saved)}catch(e){if(!e||e.code!=="declined")say(S[lang].saveFail)}return}
- const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);say(S[lang].saved)}
-$("dpng").onclick=()=>{const c=document.createElement("canvas");draw(c,QR[cur],24);c.toBlob(b=>save(b,"ERU-QR-"+cur+".png"),"image/png")};
-$("dsvg").onclick=()=>save(new Blob([svgOf(QR[cur])],{type:"image/svg+xml"}),"ERU-QR-"+cur+".svg");
+async function save(blob,name){
+ if(!blob){say(S[lang].saveFail);return}
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+ say(S[lang].saved)
+}
+$("dpng").onclick=()=>{if(!cur||!QR[cur])return;const id=cur,c=document.createElement("canvas");draw(c,QR[id],24);c.toBlob(b=>save(b,"ERU-QR-"+id+".png"),"image/png")};
+$("dsvg").onclick=()=>{if(!cur||!QR[cur])return;const id=cur;save(new Blob([svgOf(QR[id])],{type:"image/svg+xml"}),"ERU-QR-"+id+".svg")};
 $("mx").onclick=()=>$("dlg").close();
 $("dlg").addEventListener("click",e=>{if(e.target===$("dlg"))$("dlg").close()});
 $("dlg").addEventListener("close",()=>cur=null);
