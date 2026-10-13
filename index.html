@@ -179,7 +179,7 @@ render();
 <script data-goatcounter="https://eru-ai-student-hub.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <script>
 (() => {
-  const endpoint = "https://eru-ai-student-hub.goatcounter.com/counter/TOTAL.json";
+  const endpoint = "https://eru-ai-student-hub.goatcounter.com/counter//eru-hub.json";
   const getElement = id => document.getElementById(id);
 
   function cairoDate() {
@@ -201,10 +201,9 @@ render();
   }
 
   async function fetchCount(url) {
-    // A unique query value avoids stale browser/CDN cache entries. GoatCounter itself may
-    // cache public counter responses for up to four hours, as documented by the service.
-    const separator = url.includes("?") ? "&" : "?";
-    const response = await fetch(`${url}${separator}_=${Date.now()}`, {
+    // Use only documented GoatCounter query parameters. Browser cache is disabled;
+    // GoatCounter may still cache public counter responses for up to four hours.
+    const response = await fetch(url, {
       cache: "no-store",
       headers: { Accept: "application/json" }
     });
