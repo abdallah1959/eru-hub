@@ -178,33 +178,79 @@ render();
 
 <script data-goatcounter="https://eru-ai-student-hub.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <script>
-(async function loadVisitStats(){
-  const base = "https://eru-ai-student-hub.goatcounter.com/counter/TOTAL.json";
-  const value = id => document.getElementById(id);
-  const dateParts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Africa/Cairo", year: "numeric", month: "2-digit", day: "2-digit"
-  }).formatToParts(new Date());
-  const part = type => dateParts.find(item => item.type === type).value;
-  const today = `${part("year")}-${part("month")}-${part("day")}`;
-  const number = raw => {
-    const parsed = Number(String(raw).replace(/[^0-9.-]/g, ""));
-    return Number.isFinite(parsed) ? parsed.toLocaleString(document.documentElement.lang === "ar" ? "ar-EG" : "en-GB") : "—";
-  };
-  async function getCount(url) {
-    const response = await fetch(url, {cache: "no-store"});
-    if (!response.ok) throw new Error("Counter request failed");
-    const data = await response.json();
-    return data.count;
+(() => {
+  const endpoint = "https://eru-ai-student-hub.goatcounter.com/counter/TOTAL.json";
+  const getElement = id => document.getElementById(id);
+
+  function cairoDate() {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Africa/Cairo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(new Date());
+    const part = type => parts.find(item => item.type === type)?.value;
+    return `${part("year")}-${part("month")}-${part("day")}`;
   }
-  try {
-    const count = await getCount(base);
-    if (value("visit-total")) value("visit-total").textContent = number(count);
-  } catch (_) {}
-  try {
-    const url = `${base}?start=${encodeURIComponent(today)}&end=${encodeURIComponent(today)}`;
-    const count = await getCount(url);
-    if (value("visit-today")) value("visit-today").textContent = number(count);
-  } catch (_) {}
+
+  function formatCount(raw) {
+    // GoatCounter returns count as a formatted string; normalize it for locale formatting.
+    const parsed = Number(String(raw ?? "").replace(/[^0-9.-]/g, ""));
+    if (!Number.isFinite(parsed)) throw new Error("GoatCounter returned an invalid count");
+    return parsed.toLocaleString(document.documentElement.lang === "ar" ? "ar-EG" : "en-GB");
+  }
+
+  async function fetchCount(url) {
+    // A unique query value avoids stale browser/CDN cache entries. GoatCounter itself may
+    // cache public counter responses for up to four hours, as documented by the service.
+    const separator = url.includes("?") ? "&" : "?";
+    const response = await fetch(`${url}${separator}_=${Date.now()}`, {
+      cache: "no-store",
+      headers: { Accept: "application/json" }
+    });
+    if (!response.ok) throw new Error(`GoatCounter request failed (${response.status})`);
+    const data = await response.json();
+    if (data.count === undefined || data.count === null) {
+      throw new Error("GoatCounter response did not include count");
+    }
+    return formatCount(data.count);
+  }
+
+  async function updateOne(id, url) {
+    const element = getElement(id);
+    if (!element) return;
+    try {
+      const count = await fetchCount(url);
+      // The footer is recreated when switching languages, so always look up the element
+      // again after the network request completes.
+      const current = getElement(id);
+      if (current) {
+        current.textContent = count;
+        current.removeAttribute("title");
+        current.setAttribute("aria-label", count);
+      }
+    } catch (error) {
+      console.warn(`[ERU Hub] Unable to load ${id} from GoatCounter:`, error);
+      const current = getElement(id);
+      if (current) current.title = "تعذر تحميل الإحصائية؛ افتح Console لمعرفة التفاصيل";
+    }
+  }
+
+  window.refreshVisitStats = function refreshVisitStats() {
+    const today = cairoDate();
+    const todayUrl = `${endpoint}?start=${encodeURIComponent(today)}&end=${encodeURIComponent(today)}`;
+    void Promise.all([
+      updateOne("visit-total", endpoint),
+      updateOne("visit-today", todayUrl)
+    ]);
+  };
+
+  // Initial load and language changes (render() calls this after rebuilding the footer).
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", window.refreshVisitStats, { once: true });
+  } else {
+    window.refreshVisitStats();
+  }
 })();
 </script>
 \n</body>
