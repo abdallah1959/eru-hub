@@ -51,6 +51,13 @@ html[dir=rtl] .host{text-align:right}
 .ghost{background:rgba(255,255,255,.14);border:1px solid var(--gb)}
 .credit{margin-top:8px;font-size:.92rem;color:var(--soft)}.credit strong{color:#fff;font-weight:800;letter-spacing:.2px;direction:ltr;unicode-bidi:isolate}
 footer{text-align:center;margin-top:46px;padding-top:18px;border-top:1px solid var(--gb);color:#a9b8e3;font-size:.85rem}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 auto 22px;max-width:540px;text-align:center}
+.stat{min-width:0;padding:16px 12px;border:1px solid rgba(255,255,255,.2);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.11),rgba(11,21,53,.58));box-shadow:0 10px 28px rgba(0,0,0,.16);backdrop-filter:blur(14px)}
+.stat-icon{display:block;font-size:1.25rem;margin-bottom:4px}
+.stat-value{display:block;font-size:clamp(1.45rem,4vw,2rem);font-weight:800;line-height:1.3;color:#fff;font-variant-numeric:tabular-nums;direction:ltr}
+.stat-label{display:block;margin-top:5px;color:var(--soft);font-size:.82rem;font-weight:700}
+.stat-note{margin-top:8px;font-size:.7rem;color:#91a2d2}
+@media(max-width:420px){.stats{gap:8px}.stat{padding:13px 7px;border-radius:15px}.stat-label{font-size:.75rem}}
 dialog{margin:auto;border:0;border-radius:24px;padding:0;background:transparent;color:#fff;width:min(420px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto}
 dialog::backdrop{background:rgba(5,9,26,.72);backdrop-filter:blur(6px)}
 .modal{width:100%;max-height:calc(100dvh - 24px);overflow:auto}
@@ -136,7 +143,8 @@ function tile(it){const t=it[lang],s=S[lang];
 function renderDate(){const s=S[lang];$("date").textContent=new Date().toLocaleDateString(s.loc,{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"Africa/Cairo"})}
 function render(){
  const s=S[lang];document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";
- $("t_title").textContent=s.title;$("t_sub").textContent=s.sub;$("lang").textContent="🌐 "+s.lang;$("foot").innerHTML=`<div>${s.foot}</div><div class="credit">${s.by} <strong>Abdallah Abd Elsalam</strong></div>`;
+ $("t_title").textContent=s.title;$("t_sub").textContent=s.sub;$("lang").textContent="🌐 "+s.lang;$("foot").innerHTML=`<section class="stats" aria-label="${lang==="ar"?"إحصائيات الزيارات":"Visit statistics"}"><article class="stat"><span class="stat-icon" aria-hidden="true">🌐</span><span class="stat-value" id="visit-total">—</span><span class="stat-label">${lang==="ar"?"إجمالي الزيارات":"Total visits"}</span></article><article class="stat"><span class="stat-icon" aria-hidden="true">📅</span><span class="stat-value" id="visit-today">—</span><span class="stat-label">${lang==="ar"?"زيارات اليوم":"Visits today"}</span></article></section><div class="stat-note">${lang==="ar"?"الإحصائيات من GoatCounter وقد يتأخر تحديثها حتى 4 ساعات":"Stats by GoatCounter; updates may be delayed by up to 4 hours"}</div><div>${s.foot}</div><div class="credit">${s.by} <strong>Abdallah Abd Elsalam</strong></div>`;
+ if(window.refreshVisitStats)window.refreshVisitStats();
  $("md").textContent=s.mdesc;$("dpng").textContent=s.png;$("dsvg").textContent=s.svg;renderDate();
  const sec=(h,l)=>`<h2>${h}</h2><div class="grid">${l.map(tile).join("")}</div>`;
  $("out").innerHTML=sec(s.hStudy,I.filter(i=>i.g==="study"&&i.id!=="drive"))+sec(s.hMore,I.filter(i=>i.id==="drive"||i.g==="chat"));
@@ -167,5 +175,37 @@ $("lang").onclick=()=>{lang=lang==="ar"?"en":"ar";try{localStorage.setItem("eru_
 setInterval(renderDate,60000);document.addEventListener("visibilitychange",renderDate);
 render();
 </script>
-</body>
+
+<script data-goatcounter="https://eru-ai-student-hub.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<script>
+(async function loadVisitStats(){
+  const base = "https://eru-ai-student-hub.goatcounter.com/counter/TOTAL.json";
+  const value = id => document.getElementById(id);
+  const dateParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Cairo", year: "numeric", month: "2-digit", day: "2-digit"
+  }).formatToParts(new Date());
+  const part = type => dateParts.find(item => item.type === type).value;
+  const today = `${part("year")}-${part("month")}-${part("day")}`;
+  const number = raw => {
+    const parsed = Number(String(raw).replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(parsed) ? parsed.toLocaleString(document.documentElement.lang === "ar" ? "ar-EG" : "en-GB") : "—";
+  };
+  async function getCount(url) {
+    const response = await fetch(url, {cache: "no-store"});
+    if (!response.ok) throw new Error("Counter request failed");
+    const data = await response.json();
+    return data.count;
+  }
+  try {
+    const count = await getCount(base);
+    if (value("visit-total")) value("visit-total").textContent = number(count);
+  } catch (_) {}
+  try {
+    const url = `${base}?start=${encodeURIComponent(today)}&end=${encodeURIComponent(today)}`;
+    const count = await getCount(url);
+    if (value("visit-today")) value("visit-today").textContent = number(count);
+  } catch (_) {}
+})();
+</script>
+\n</body>
 </html>
