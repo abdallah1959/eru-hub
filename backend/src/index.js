@@ -54,7 +54,7 @@ export default {
   async fetch(request, env) {
     const headers = corsHeaders(request, env);
     const url = new URL(request.url);
-    const path = url.pathname.replace(/\\/+$/, "") || "/";
+    const path = url.pathname.replace(/\/+$/, "") || "/";
 
     if (request.method === "OPTIONS") {
       if (!isSafeOrigin(request, env)) return json({ error: "origin_not_allowed" }, 403, headers);
