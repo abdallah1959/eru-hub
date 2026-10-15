@@ -36,12 +36,13 @@ No student accounts. Public users can view only published records. Admin changes
 - Created isolated branch `feature/academic-hub-foundation`; production branch unchanged.
 - Added initial D1 schema/migration, Worker configuration template, published-only public API, and Node test suite.
 - Implemented PBKDF2 password verification, signed 8-hour HttpOnly/Secure/SameSite=Strict admin session cookies, strict Origin checks, allowlisted CRUD endpoints for the four resource types, input validation, and generic errors.
-- Added an Arabic admin dashboard page with login, list/create/edit/delete flows for courses, sessions, rooms, and section groups. It intentionally disables login until the Worker URL is configured.
+- Added an Arabic admin dashboard with login and CRUD for courses, sessions, rooms, and section groups. The Worker also serves its own same-origin copy at `/admin.html`, avoiding third-party cookie dependence; the GitHub Pages copy stays disabled until deployment details are configured.
 - Added a GitHub Actions workflow to run `npm test` for this feature branch.
 - Public API paths: `/api/courses`, `/api/sessions`, `/api/rooms`, `/api/section-groups`, and `/api/health`.
 - Public SQL filters for `published` records. Admin API currently returns 503 by design; no writes or login are enabled yet.
 - Cloudflare account/database/origin configuration and deployment have not been done.
 - GitHub Actions passed on commit `16ba3f1b75a57bdfd2300ee24fcb488d7a70f49a` (Node test suite). A later admin-dashboard commit has been added; confirm CI for the latest head before considering this checkpoint green.
+- The admin session cookie is Secure, HttpOnly, SameSite=Strict and scoped to `/api/admin`; the Worker admin page is same-origin with the API.
 - Remaining security/deployment work: configure Cloudflare and D1, apply migration, set Worker secrets, add login rate limiting/WAF protection, test against real D1, and run deployment smoke tests. No production deployment.
 
 ## Next
