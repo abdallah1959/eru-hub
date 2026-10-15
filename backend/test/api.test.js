@@ -10,7 +10,13 @@ function request(path, options = {}) {
 }
 const ORIGIN = "https://abdallah1959.github.io";
 function env(overrides = {}) {
-  return { SITE_ORIGIN: ORIGIN, ADMIN_PASSWORD_HASH: "c2FsdA$100000$invalid", ADMIN_SESSION_SECRET: "test-session-secret-long-enough", ...overrides };
+  return {
+    SITE_ORIGIN: ORIGIN,
+    ADMIN_PASSWORD_HASH: "c2FsdA$100000$invalid",
+    ADMIN_SESSION_SECRET: "test-session-secret-long-enough",
+    LOGIN_LIMITER: { async limit() { return { success: true }; } },
+    ...overrides
+  };
 }
 function b64url(bytes) {
   let binary = "";
@@ -58,6 +64,25 @@ test("public endpoint returns only rows returned by published-only SQL", async (
   assert.deepEqual(await response.json(), { data: [{ id: "c1", code: "CS101" }] });
   assert.match(statements[0], /status = 'published'/);
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), ORIGIN);
+});
+
+test("safe public GET can be called without an Origin header", async () => {
+  const DB = { prepare() { return { async all() { return { results: [] }; } }; } };
+  const response = await worker.fetch(request("/api/courses"), env({ DB }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { data: [] });
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), null);
+});
+
+test("login is rate limited before password verification", async () => {
+  const limitedEnv = env({ DB: {}, LOGIN_LIMITER: { async limit() { return { success: false }; } } });
+  const response = await worker.fetch(request("/api/admin/login", {
+    method: "POST",
+    headers: withOrigin({ "Content-Type": "application/json" }),
+    body: JSON.stringify({ password: "not-relevant" })
+  }), limitedEnv);
+  assert.equal(response.status, 429);
+  assert.deepEqual(await response.json(), { error: "too_many_attempts" });
 });
 
 test("public endpoint fails safely when D1 is not configured", async () => {
