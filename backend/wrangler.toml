@@ -1,14 +1,15 @@
-name = "eru-hub-api"
+name = "eru-student-hub-api"
 main = "src/index.js"
 compatibility_date = "2026-10-16"
 
-# Add your real D1 database ID after creating the database in Cloudflare.
-# Do not deploy until the database binding and required secrets are configured.
 [[d1_databases]]
 binding = "DB"
-database_name = "eru-hub"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_name = "eru-student-hub-db"
+database_id = "e853088f-5a6e-476a-8983-1ae86a47875e"
 migrations_dir = "migrations"
+
+[vars]
+SITE_ORIGIN = "https://abdallah1959.github.io"
 
 [assets]
 directory = "./public"
