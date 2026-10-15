@@ -83,7 +83,7 @@ test("login rejects wrong password and sets secure cookie on success", async () 
   const cookie = success.headers.get("Set-Cookie");
   assert.match(cookie, /HttpOnly/);
   assert.match(cookie, /Secure/);
-  assert.match(cookie, /SameSite=None/);
+  assert.match(cookie, /SameSite=Strict/);
   assert.match(cookie, /Path=\/api\/admin/);
 });
 
