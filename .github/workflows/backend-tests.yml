@@ -21,3 +21,4 @@ jobs:
           node-version: 22
       - run: npm test
       - run: node --check ../hub-features.js
+      - run: python test/check_migrations.py
