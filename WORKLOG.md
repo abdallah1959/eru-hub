@@ -39,7 +39,8 @@ No student accounts. Public users can view only published records. Admin changes
 - Added initial D1 schema/migrations, Worker configuration, published-only public API, and Node test suite.
 - Imported the available Level 1 lecture schedule as 6 courses, 3 halls, and 24 lecture entries. Every imported record is marked `needs_review`; none is public by default.
 - Added a SQLite migration validation test to check record counts, review statuses, and foreign-key integrity.
-- Implemented PBKDF2 password verification, signed 8-hour HttpOnly/Secure/SameSite=Strict admin session cookies, strict Origin checks, allowlisted CRUD endpoints for the four resource types, input validation, and generic errors.
+- Implemented PBKDF2 password verification, signed 8-hour HttpOnly/Secure/SameSite=Strict admin session cookies, strict Origin checks for state-changing requests, safe originless GET handling, allowlisted CRUD endpoints for the four resource types, input validation, and generic errors.
+- Added a Cloudflare Rate Limiting binding for admin login (5 attempts per 60 seconds per key, per Cloudflare location) and a test for HTTP 429 behavior. This is defense-in-depth and is not a globally strict rate limit.
 - Added an Arabic admin dashboard with login and CRUD for courses, sessions, rooms, and section groups. The Worker serves its same-origin copy at `/admin.html`; the GitHub Pages copy stays disabled until the real API is deployed and verified.
 - Added a GitHub Actions workflow to run Node tests, JS syntax check, and SQLite migration validation.
 - Public API paths: `/api/courses`, `/api/sessions`, `/api/rooms`, `/api/section-groups`, and `/api/health`.
@@ -51,11 +52,11 @@ No student accounts. Public users can view only published records. Admin changes
 - The current Worker in Cloudflare still returns `Hello World!`; no production API deployment or frontend connection has happened.
 
 ## Remaining before production
-1. Confirm CI passes for the latest branch head after the Wrangler/README updates.
+1. Confirm CI passes for the latest branch head after the Worker, test, Wrangler, README, and worklog updates.
 2. Connect the existing Worker through Settings → Builds to the repository and `backend` root directory, using the feature branch intentionally; understand that a push can trigger a production deployment.
 3. Add Worker secrets `ADMIN_PASSWORD_HASH` and `ADMIN_SESSION_SECRET` using the Cloudflare secret UI; never commit them or send them in chat.
 4. Review and apply D1 migrations exactly once with Wrangler; verify migration history and row counts.
-5. Add Cloudflare rate limiting/WAF protection for admin login; the code currently has no persistent login rate limiter.
+5. Verify the configured login rate-limit binding on the deployed Worker; it is location-local and permissive, so add a WAF rule if a custom domain/zone is later attached.
 6. Test the deployed API, same-origin admin login, CRUD, and published-only public reads against real D1.
 7. Only then configure the GitHub Pages frontend to use the API URL and run public smoke tests.
 8. Review the full diff and security checklist. Do not merge or publish broader changes without explicit approval.
