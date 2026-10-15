@@ -26,7 +26,7 @@ Cloudflare Workers + D1 backend candidate for the first-year AI cohort at Egypti
 
 ## Authentication and secrets
 - Set `SITE_ORIGIN` to the exact GitHub Pages origin: `https://abdallah1959.github.io`. It is a non-secret Worker variable in Wrangler configuration.
-- Generate a password hash locally with Node.js: `node scripts/hash-password.mjs 'your-long-unique-password'`. Use a password manager; do not share or commit the password or hash.
+- Generate a password hash locally with Node.js by running `node scripts/hash-password.mjs` from an interactive terminal. Enter the password at the hidden prompt; it is not echoed or passed as a command-line argument. Use a password manager; do not share or commit the password or hash.
 - Configure the printed value as Worker secret `ADMIN_PASSWORD_HASH`, and set a separate random `ADMIN_SESSION_SECRET` (at least 32 random bytes).
 - The login uses PBKDF2-HMAC-SHA-256 and an 8-hour signed, HttpOnly, Secure, SameSite=Strict cookie. The Worker admin page is same-origin with the API.
 - Admin endpoints fail closed unless all required configuration is present.
