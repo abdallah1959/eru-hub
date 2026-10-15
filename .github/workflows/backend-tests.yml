@@ -20,3 +20,4 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+      - run: node --check ../hub-features.js
