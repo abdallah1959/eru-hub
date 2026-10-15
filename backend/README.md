@@ -19,3 +19,13 @@ Initial backend candidate: Cloudflare Workers + D1. This folder is isolated on t
 
 ## Data status
 The schema allows incomplete records. Records should remain `draft` or `needs_review` until the details are confirmed. Only `published` data should appear publicly.
+
+
+## Admin authentication configuration (not deployed yet)
+- Set `SITE_ORIGIN` to the exact GitHub Pages origin, for example `https://abdallah1959.github.io`.
+- Generate a password hash locally with Node.js 22: `node scripts/hash-password.mjs 'your-long-unique-password'`. Use a password manager; do not share or commit the password or hash.
+- Configure the printed value as the Worker secret `ADMIN_PASSWORD_HASH`, and set a separate random `ADMIN_SESSION_SECRET` (at least 32 random bytes).
+- Bind the D1 database as `DB` and configure `SITE_ORIGIN` as a Worker variable.
+- The login uses PBKDF2-HMAC-SHA-256 and an 8-hour signed, HttpOnly, Secure, SameSite=Strict cookie. The admin API is unavailable unless all required configuration is present.
+- The login endpoint currently has no persistent rate limiter. Before exposing it publicly, add Cloudflare rate limiting / WAF protection and verify it in the deployed environment.
+- Only deploy after the test workflow passes and the Worker configuration, database migrations, secrets, and CORS origin are checked.
