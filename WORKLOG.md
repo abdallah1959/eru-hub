@@ -41,6 +41,7 @@ No student accounts. Public users can view only published records. Admin changes
 - Added a SQLite migration validation test to check record counts, review statuses, and foreign-key integrity.
 - Implemented PBKDF2 password verification, signed 8-hour HttpOnly/Secure/SameSite=Strict admin session cookies, strict Origin checks for state-changing requests, safe originless GET handling, allowlisted CRUD endpoints for the four resource types, input validation, and generic errors.
 - Added a Cloudflare Rate Limiting binding for admin login (5 attempts per 60 seconds per key, per Cloudflare location) and a test for HTTP 429 behavior. This is defense-in-depth and is not a globally strict rate limit.
+- Updated the password-hash helper to prompt for the password without echoing it or passing it as a command-line argument.
 - Added an Arabic admin dashboard with login and CRUD for courses, sessions, rooms, and section groups. The Worker serves its same-origin copy at `/admin.html`; the GitHub Pages copy stays disabled until the real API is deployed and verified.
 - Added a GitHub Actions workflow to run Node tests, JS syntax check, and SQLite migration validation.
 - Public API paths: `/api/courses`, `/api/sessions`, `/api/rooms`, `/api/section-groups`, and `/api/health`.
