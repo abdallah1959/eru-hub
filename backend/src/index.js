@@ -92,7 +92,7 @@ async function validSession(request, secret) {
   }
 }
 function cookieHeader(value, maxAge) {
-  return COOKIE_NAME + "=" + value + "; Path=/api/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=" + maxAge;
+  return COOKIE_NAME + "=" + value + "; Path=/api/admin; HttpOnly; Secure; SameSite=None; Max-Age=" + maxAge;
 }
 async function readJson(request) {
   const length = Number(request.headers.get("Content-Length") || "0");
