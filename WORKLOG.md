@@ -34,16 +34,20 @@ No student accounts. Public users can view only published records. Admin changes
 - Confirmed GitHub repository access and reviewed the current `main` branch.
 - Repository root previously contained only `index.html` (581,834 bytes).
 - Created isolated branch `feature/academic-hub-foundation`; production branch unchanged.
-- Added this worklog, initial D1 schema and migration, Worker configuration template, read-only public API scaffold, and Node built-in test suite.
+- Added initial D1 schema/migration, Worker configuration template, published-only public API, and Node test suite.
+- Implemented PBKDF2 password verification, signed 8-hour HttpOnly/Secure/SameSite=Strict admin session cookies, strict Origin checks, allowlisted CRUD endpoints for the four resource types, input validation, and generic errors.
+- Added an Arabic admin dashboard page with login, list/create/edit/delete flows for courses, sessions, rooms, and section groups. It intentionally disables login until the Worker URL is configured.
 - Added a GitHub Actions workflow to run `npm test` for this feature branch.
 - Public API paths: `/api/courses`, `/api/sessions`, `/api/rooms`, `/api/section-groups`, and `/api/health`.
 - Public SQL filters for `published` records. Admin API currently returns 503 by design; no writes or login are enabled yet.
 - Cloudflare account/database/origin configuration and deployment have not been done.
-- Automated CI status has not yet been confirmed; tests are committed but must run before relying on this scaffold.
+- GitHub Actions passed on commit `16ba3f1b75a57bdfd2300ee24fcb488d7a70f49a` (Node test suite). A later admin-dashboard commit has been added; confirm CI for the latest head before considering this checkpoint green.
+- Remaining security/deployment work: configure Cloudflare and D1, apply migration, set Worker secrets, add login rate limiting/WAF protection, test against real D1, and run deployment smoke tests. No production deployment.
 
 ## Next
 1. Run CI and fix any failures.
-2. Implement admin login/session security and authorized CRUD, then test it.
-3. Integrate public UI into existing `index.html` without removing existing features.
-4. Add currently available schedule and group data only after validating the source files.
+1. Confirm CI on the latest head and expand validation tests for CRUD and session expiry.
+2. Configure Cloudflare Worker/D1 and rate limiting; do not deploy with placeholder database ID.
+3. Integrate schedule, campus/room guide, and section-group views into existing `index.html` without removing current features.
+4. Import source schedule data as `needs_review` until verified; do not publish unconfirmed records.
 5. Review full diff and security checklist; ask before merging/publishing.
