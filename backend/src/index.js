@@ -51,7 +51,9 @@ function json(data, status, headers) {
 }
 function isAllowedOrigin(request, env) {
   const origin = request.headers.get("Origin");
-  if (!origin) return false;
+  // Browsers commonly omit Origin on same-origin GET requests. GET routes are read-only;
+  // all state-changing requests and preflights still require an explicitly allowed Origin.
+  if (!origin) return request.method === "GET";
   const requestOrigin = new URL(request.url).origin;
   return origin === requestOrigin || (Boolean(env.SITE_ORIGIN) && origin === env.SITE_ORIGIN);
 }
@@ -166,10 +168,13 @@ export default {
       return json({ error: "not_found" }, 404, headers);
     }
     if (!isAllowedOrigin(request, env)) return json({ error: "origin_not_allowed" }, 403, headers);
-    if (!env.ADMIN_PASSWORD_HASH || !env.ADMIN_SESSION_SECRET || !env.DB) return json({ error: "admin_not_configured" }, 503, headers);
+    if (!env.ADMIN_PASSWORD_HASH || !env.ADMIN_SESSION_SECRET || !env.DB || !env.LOGIN_LIMITER) return json({ error: "admin_not_configured" }, 503, headers);
 
     if (path === "/api/admin/login" && request.method === "POST") {
       try {
+        const clientKey = request.headers.get("CF-Connecting-IP") || "unknown";
+        const limit = await env.LOGIN_LIMITER.limit({ key: clientKey });
+        if (!limit.success) return json({ error: "too_many_attempts" }, 429, headers);
         const body = await readJson(request);
         if (typeof body.password !== "string" || body.password.length > 1024) return json({ error: "invalid_credentials" }, 401, headers);
         const [salt, iterationsText, expectedText] = env.ADMIN_PASSWORD_HASH.split("$");
