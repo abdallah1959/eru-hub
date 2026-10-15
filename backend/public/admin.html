@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>إدارة ERU Student Hub</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#131b30;--line:#26334f;--text:#f4f7ff;--muted:#9eabc5;--accent:#8da8ff;--danger:#ff8c9b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#172544,var(--bg) 55%);color:var(--text);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+main{width:min(1100px,94vw);margin:36px auto}.top{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}h1{font-size:clamp(1.5rem,4vw,2.2rem);margin:0}p{color:var(--muted);margin:.4rem 0 1.2rem}.panel{background:rgba(19,27,48,.94);border:1px solid var(--line);border-radius:18px;padding:22px;margin:18px 0;box-shadow:0 16px 50px #0002}.row{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:180px}label{font-size:.9rem;color:#c5d0e7}input,select,textarea{width:100%;background:#0a1121;color:var(--text);border:1px solid #344362;border-radius:10px;padding:11px;font:inherit}button{background:var(--accent);color:#091020;border:0;border-radius:10px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}button.secondary{background:#24324f;color:var(--text);border:1px solid #3b4a69}button.danger{background:#4b2330;color:#ffdce1;border:1px solid #783647}button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.notice{padding:12px 14px;border-radius:10px;background:#1b2b49;color:#dce6ff;margin:12px 0}.notice.error{background:#45212a;color:#ffdce1}.notice.ok{background:#15372f;color:#c5ffe9}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tabs button[aria-pressed=true]{outline:2px solid var(--accent)}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:720px}th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}th{color:#b9c9ed;font-weight:600}td{max-width:280px;overflow-wrap:anywhere}.actions{display:flex;gap:6px}.actions button{padding:6px 10px;font-size:.9rem}.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.muted{color:var(--muted);font-size:.9rem}.login{max-width:520px;margin:35px auto}.status{font-size:.85rem;border:1px solid #344362;border-radius:999px;padding:3px 9px;display:inline-block}@media(max-width:600px){main{margin:20px auto}.panel{padding:15px}.row>.field{min-width:100%}}
+</style>
+</head>
+<body>
+<main>
+  <header class="top"><div><h1>لوحة إدارة ERU Student Hub</h1><p>إدارة الجداول الدراسية والقاعات وروابط مجموعات السكاشن.</p></div><a href="./" style="color:var(--accent)">العودة للموقع ↗</a></header>
+  <div id="notice" class="notice" role="status">جارٍ التحقق من إعدادات الاتصال…</div>
+  <section id="loginPanel" class="panel login">
+    <h2>تسجيل دخول المسؤول</h2><p>الوصول مخصص للمسؤول فقط. لا تستخدم جهازًا عامًا.</p>
+    <form id="loginForm" class="row"><div class="field"><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password" minlength="14" required></div><button type="submit">دخول</button></form>
+  </section>
+  <section id="appPanel" class="hidden">
+    <div class="top"><div><h2>إدارة البيانات</h2><p>التغييرات الجديدة تُحفظ كمسودة افتراضيًا؛ انشر فقط البيانات التي تم التأكد منها.</p></div><button id="logout" class="secondary">تسجيل الخروج</button></div>
+    <nav class="tabs" aria-label="أنواع البيانات">
+      <button data-resource="courses" aria-pressed="true">المواد</button>
+      <button data-resource="sessions" aria-pressed="false">الجدول</button>
+      <button data-resource="rooms" aria-pressed="false">القاعات</button>
+      <button data-resource="section-groups" aria-pressed="false">جروبات السكاشن</button>
+    </nav>
+    <section class="panel">
+      <div class="top"><div><h2 id="resourceTitle">المواد</h2><p class="muted">يمكن تعديل الحالة إلى «منشور» بعد مراجعة المعلومات.</p></div><button id="newRecord">+ إضافة سجل</button></div>
+      <div id="tableWrap" class="table-wrap"></div>
+    </section>
+    <section id="editorPanel" class="panel hidden">
+      <h2 id="editorTitle">إضافة سجل</h2><form id="recordForm"><div id="fields" class="form-grid"></div><div class="row" style="margin-top:16px"><button type="submit">حفظ</button><button type="button" id="cancelEdit" class="secondary">إلغاء</button></div></form>
+    </section>
+  </section>
+</main>
+<script>
+"use strict";
+// Set this to the deployed Cloudflare Worker origin before publishing this admin page.
+const API_BASE = window.location.origin;
+const $ = id => document.getElementById(id);
+const specs = {
+  courses: {title:"المواد",fields:[["code","كود المادة","text",true],["name_ar","اسم المادة بالعربي","text",true],["name_en","اسم المادة بالإنجليزي","text"],["instructor","الدكتور","text"],["description_ar","الوصف بالعربي","text"],["description_en","الوصف بالإنجليزي","text"],["resource_url","رابط المادة أو الدرايف","url"],["status","حالة النشر","status"]]},
+  sessions: {title:"الجدول الدراسي",fields:[["course_id","معرّف المادة","text",true],["day_of_week","اليوم (0 الأحد - 6 السبت)","number",true],["start_time","وقت البداية (HH:MM)","time",true],["end_time","وقت النهاية (HH:MM)","time",true],["session_type","نوع المحاضرة","session_type",true],["section_code","السكشن","text"],["room_id","معرّف القاعة","text"],["instructor","الدكتور","text"],["notes","ملاحظات / مصدر","text"],["status","حالة النشر","status"]]},
+  rooms: {title:"القاعات",fields:[["building","المبنى","text"],["floor","الدور","text"],["room_code","رقم القاعة","text",true],["name_ar","اسم القاعة بالعربي","text"],["name_en","اسم القاعة بالإنجليزي","text"],["description_ar","الوصف بالعربي","text"],["description_en","الوصف بالإنجليزي","text"],["status","حالة النشر","status"]]},
+  "section-groups": {title:"جروبات السكاشن",fields:[["course_id","معرّف المادة (اختياري)","text"],["section_code","رمز السكشن","text",true],["group_url","رابط الجروب","url",true],["notes","ملاحظات / مصدر","text"],["status","حالة النشر","status"]]}
+};
+let resource="courses", records=[], editingId=null;
+const labels={draft:"مسودة",needs_review:"مراجعة مطلوبة",published:"منشور",archived:"مؤرشف"};
+function note(message,type=""){const n=$("notice");n.textContent=message;n.className="notice"+(type?" "+type:"");}
+function api(path,options={}){return fetch(API_BASE+path,{...options,credentials:"include",headers:{"Content-Type":"application/json",...(options.headers||{})}}).then(async r=>{let data={};try{data=await r.json()}catch{}if(!r.ok)throw new Error(({unauthorized:"انتهت الجلسة أو لم يتم تسجيل الدخول",invalid_credentials:"كلمة المرور غير صحيحة",admin_not_configured:"إعدادات السيرفر غير مكتملة",origin_not_allowed:"مصدر الطلب غير مسموح",duplicate_record:"هذا السجل موجود بالفعل",invalid_relation:"معرّف المادة أو القاعة غير صحيح"})[data.error]||("تعذر إتمام الطلب ("+r.status+")"));return data;});}
+function esc(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function makeInput([key,label,type,required],value=""){let el;if(type==="status"||type==="session_type"){el=document.createElement("select");const choices=type==="status"?Object.entries(labels):[["lecture","محاضرة"],["tutorial","سكشن"],["lab","معمل"]];for(const [v,l] of choices){const o=document.createElement("option");o.value=v;o.textContent=l;el.append(o)}el.value=value||(type==="status"?"draft":"lecture");}else{el=document.createElement("input");el.type=type==="number"?"number":type==="time"?"time":type==="url"?"url":"text";if(type==="number"){el.min="0";el.max="6";el.step="1"}el.value=value??"";}el.id="field_"+key;el.name=key;if(required)el.required=true;const wrap=document.createElement("div");wrap.className="field";const labelEl=document.createElement("label");labelEl.htmlFor=el.id;labelEl.textContent=label;wrap.append(labelEl,el);return wrap;}
+function renderEditor(record={}){$("fields").replaceChildren();for(const field of specs[resource].fields){if(field[0]==="status"&&!record.id&&record.status===undefined)record.status="draft";$("fields").append(makeInput(field,record[field[0]]??""));}$("editorTitle").textContent=editingId?"تعديل سجل":"إضافة سجل";$("editorPanel").classList.remove("hidden");$("editorPanel").scrollIntoView({behavior:"smooth",block:"start"});}
+function renderTable(){const wrap=$("tableWrap");if(!records.length){wrap.innerHTML='<p class="muted">لا توجد سجلات حتى الآن. أضف البيانات المؤكدة من الزر أعلاه.</p>';return;}const fields=specs[resource].fields;const table=document.createElement("table");const thead=document.createElement("thead");const tr=document.createElement("tr");for(const f of fields){const th=document.createElement("th");th.textContent=f[1];tr.append(th)}const actions=document.createElement("th");actions.textContent="إجراءات";tr.append(actions);thead.append(tr);table.append(thead);const tbody=document.createElement("tbody");for(const row of records){const tr=document.createElement("tr");for(const f of fields){const td=document.createElement("td");td.textContent=f[0]==="status"?(labels[row[f[0]]||row[f[0]] ]||row[f[0]]||"—"):(row[f[0]]??"—");tr.append(td)}const td=document.createElement("td");td.className="actions";const edit=document.createElement("button");edit.className="secondary";edit.textContent="تعديل";edit.onclick=()=>{editingId=row.id;renderEditor(row)};const del=document.createElement("button");del.className="danger";del.textContent="حذف";del.onclick=async()=>{if(!confirm("متأكد إنك عايز تحذف السجل ده؟"))return;try{await api("/api/admin/"+resource+"/"+encodeURIComponent(row.id),{method:"DELETE"});note("تم حذف السجل.","ok");await loadRecords()}catch(e){note(e.message,"error")}};td.append(edit,del);tr.append(td);tbody.append(tr)}table.append(tbody);wrap.replaceChildren(table);}
+async function loadRecords(){try{const result=await api("/api/admin/"+resource);records=result.data||[];renderTable();note("تم تحميل البيانات. راجع حالة النشر قبل عرضها للطلاب.","ok")}catch(e){note(e.message,"error");if(/الجلسة|تسجيل الدخول/.test(e.message)){ $("appPanel").classList.add("hidden");$("loginPanel").classList.remove("hidden")}}}
+async function login(e){e.preventDefault();try{await api("/api/admin/login",{method:"POST",body:JSON.stringify({password:$("password").value})});$("password").value="";$("loginPanel").classList.add("hidden");$("appPanel").classList.remove("hidden");note("تم تسجيل الدخول.","ok");await loadRecords()}catch(err){note(err.message,"error")}}
+$("loginForm").addEventListener("submit",login);
+$("logout").onclick=async()=>{try{await api("/api/admin/logout",{method:"POST"})}catch{}$("appPanel").classList.add("hidden");$("loginPanel").classList.remove("hidden");note("تم تسجيل الخروج.");};
+document.querySelectorAll("[data-resource]").forEach(button=>button.addEventListener("click",()=>{resource=button.dataset.resource;document.querySelectorAll("[data-resource]").forEach(b=>b.setAttribute("aria-pressed",String(b===button)));$("resourceTitle").textContent=specs[resource].title;$("editorPanel").classList.add("hidden");editingId=null;loadRecords()}));
+$("newRecord").onclick=()=>{editingId=null;renderEditor({status:"draft"})};
+$("cancelEdit").onclick=()=>{$("editorPanel").classList.add("hidden");editingId=null};
+$("recordForm").addEventListener("submit",async e=>{e.preventDefault();const body={};for(const f of specs[resource].fields){const el=$("field_"+f[0]);if(!el)continue;let value=el.value.trim();if(value==="")continue;if(f[2]==="number")value=Number(value);body[f[0]]=value;}try{if(editingId)await api("/api/admin/"+resource+"/"+encodeURIComponent(editingId),{method:"PATCH",body:JSON.stringify(body)});else await api("/api/admin/"+resource,{method:"POST",body:JSON.stringify(body)});$("editorPanel").classList.add("hidden");editingId=null;note("تم حفظ السجل. لو الحالة مسودة فلن يظهر للعامة.","ok");await loadRecords()}catch(err){note(err.message,"error")}});
+if(!API_BASE){note("لوحة الإدارة جاهزة كواجهة، لكن لازم نشر الـ Worker وضبط عنوان الـ API قبل استخدامها. لا تدخل كلمة مرورك قبل اكتمال الإعداد.","error");$("loginForm").querySelector("button").disabled=true;}
+else{api("/api/admin/me").then(()=>{$("loginPanel").classList.add("hidden");$("appPanel").classList.remove("hidden");loadRecords()}).catch(()=>note("سجّل الدخول بحساب المسؤول.",""));}
+</script>
+</body>
+</html>
