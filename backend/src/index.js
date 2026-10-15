@@ -50,7 +50,10 @@ function json(data, status, headers) {
   return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json; charset=utf-8", ...headers } });
 }
 function isAllowedOrigin(request, env) {
-  return Boolean(env.SITE_ORIGIN) && request.headers.get("Origin") === env.SITE_ORIGIN;
+  const origin = request.headers.get("Origin");
+  if (!origin) return false;
+  const requestOrigin = new URL(request.url).origin;
+  return origin === requestOrigin || (Boolean(env.SITE_ORIGIN) && origin === env.SITE_ORIGIN);
 }
 function b64url(bytes) {
   let binary = "";
@@ -92,7 +95,7 @@ async function validSession(request, secret) {
   }
 }
 function cookieHeader(value, maxAge) {
-  return COOKIE_NAME + "=" + value + "; Path=/api/admin; HttpOnly; Secure; SameSite=None; Max-Age=" + maxAge;
+  return COOKIE_NAME + "=" + value + "; Path=/api/admin; HttpOnly; Secure; SameSite=Strict; Max-Age=" + maxAge;
 }
 async function readJson(request) {
   const length = Number(request.headers.get("Content-Length") || "0");
@@ -157,7 +160,11 @@ export default {
         return json({ error: "service_unavailable" }, 503, headers);
       }
     }
-    if (!path.startsWith("/api/admin")) return json({ error: "not_found" }, 404, headers);
+    if (path === "/admin") return Response.redirect(new URL("/admin.html", url).toString(), 302);
+    if (!path.startsWith("/api/admin")) {
+      if (env.ASSETS) return env.ASSETS.fetch(request);
+      return json({ error: "not_found" }, 404, headers);
+    }
     if (!isAllowedOrigin(request, env)) return json({ error: "origin_not_allowed" }, 403, headers);
     if (!env.ADMIN_PASSWORD_HASH || !env.ADMIN_SESSION_SECRET || !env.DB) return json({ error: "admin_not_configured" }, 503, headers);
 
