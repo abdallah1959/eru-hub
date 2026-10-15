@@ -32,7 +32,7 @@ Cloudflare Workers + D1 backend candidate for the first-year AI cohort at Egypti
 - Admin endpoints fail closed unless all required configuration is present.
 
 ## Security requirements before public use
-- Add Cloudflare rate limiting / WAF protection for the admin login endpoint; the code currently has no persistent rate limiter.
+- The Worker now has a Cloudflare Rate Limiting binding for login attempts (5 requests per 60 seconds per key, per Cloudflare location). This is defense-in-depth, not a global/strict accounting limit; consider an additional WAF rule if a custom domain/zone is later added.
 - Verify origin checks, cookie behavior, input validation, and admin authorization against the deployed Worker.
 - Test CRUD operations against real D1 using unpublished test records, then remove them.
 - Public endpoints return only published records.
