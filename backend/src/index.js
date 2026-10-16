@@ -181,6 +181,9 @@ export default {
         const iterations = Number(iterationsText);
         if (!salt || !expectedText || !Number.isInteger(iterations) || iterations < 100000 || iterations > 1000000) return json({ error: "admin_not_configured" }, 503, headers);
         const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(body.password), "PBKDF2", false, ["deriveBits"]);
+        // Workers WebCrypto currently caps PBKDF2 at 100,000 iterations.
+        // The hash format is unchanged; hashes generated at 210,000 iterations must be
+        // regenerated using the same supported iteration count before deployment.
         const derived = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: fromB64url(salt), iterations, hash: "SHA-256" }, key, 256));
         const expected = fromB64url(expectedText);
         if (derived.length !== expected.length) return json({ error: "invalid_credentials" }, 401, headers);
