@@ -15,7 +15,7 @@ SITE_ORIGIN = "https://abdallah1959.github.io"
 [assets]
 directory = "./public"
 binding = "ASSETS"
-run_worker_first = true
+run_worker_first = ["/api/*"]
 
 [[ratelimits]]
 name = "LOGIN_LIMITER"
