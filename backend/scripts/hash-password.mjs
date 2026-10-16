@@ -28,7 +28,8 @@ function finish() {
   }
 
   const salt = randomBytes(16);
-  const iterations = 210000;
+  // Cloudflare Workers WebCrypto supports at most 100,000 PBKDF2 iterations.
+  const iterations = 100000;
   const digest = pbkdf2Sync(password, salt, iterations, 32, "sha256");
   password = "";
   const b64url = value => value.toString("base64url");
