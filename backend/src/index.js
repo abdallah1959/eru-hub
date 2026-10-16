@@ -190,6 +190,11 @@ export default {
         const session = await createSession(env.ADMIN_SESSION_SECRET);
         return json({ ok: true, expires_in: SESSION_SECONDS }, 200, { ...headers, "Set-Cookie": cookieHeader(session, SESSION_SECONDS) });
       } catch (error) {
+        // Log only exception metadata; never log request bodies, passwords, or secrets.
+        console.error("[ERU Hub API] Admin login failed:", {
+          name: error instanceof Error ? error.name : "UnknownError",
+          message: error instanceof Error ? error.message : String(error),
+        });
         return json({ error: error.message === "payload_too_large" ? "payload_too_large" : "invalid_request" }, error.message === "payload_too_large" ? 413 : 400, headers);
       }
     }
