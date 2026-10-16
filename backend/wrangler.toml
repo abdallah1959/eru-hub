@@ -1,0 +1,23 @@
+
+name = "eru-student-hub-api"
+main = "src/index.js"
+compatibility_date = "2026-10-16"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "eru-student-hub-db"
+database_id = "e853088f-5a6e-476a-8983-1ae86a47875e"
+migrations_dir = "migrations"
+
+[vars]
+SITE_ORIGIN = "https://abdallah1959.github.io"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[ratelimits]]
+name = "LOGIN_LIMITER"
+namespace_id = "10420261016"
+simple = { limit = 5, period = 60 }
